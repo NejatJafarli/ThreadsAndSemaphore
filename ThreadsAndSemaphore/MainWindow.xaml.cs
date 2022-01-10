@@ -22,7 +22,7 @@ namespace ThreadsAndSemaphore
     /// </summary>
     public partial class MainWindow : Window
     {
-        public Semaphore MySemaphore { get; set; }=new Semaphore(1,1);
+        public Semaphore MySemaphore { get; set; } = new Semaphore(5, 5);
         public MainWindow()
         {
             InitializeComponent();
@@ -40,14 +40,14 @@ namespace ThreadsAndSemaphore
             FakeTheads.Add($"Thread {temp.ManagedThreadId}");
 
         }
-        public void ThreadMethod()
+        public void ThreadMethod(object state)
         {
             bool st = false;
-
+            var s = state as Semaphore;
             while (!st)
             {
 
-                if (MySemaphore.WaitOne(1))
+                if (s.WaitOne(50))
                 {
                     int second = 0;
                     int index = 0;
@@ -61,9 +61,7 @@ namespace ThreadsAndSemaphore
                         ThisThreadItem = LBWorkingTH.Items[index];
                         item = ThisThreadItem.ToString();
                         if (LBWaitingTH.Items.Contains($"Thread {ThreadId2}"))
-                        {
                             LBWaitingTH.Items.Remove($"Thread {ThreadId2}");
-                        }
 
                     });
                     try
@@ -93,7 +91,7 @@ namespace ThreadsAndSemaphore
                             LBWorkingTH.Items.RemoveAt(index);
 
                         });
-                        MySemaphore.Release();
+                        s.Release();
                     }
                 }
                 else
@@ -122,7 +120,7 @@ namespace ThreadsAndSemaphore
             {
                 if (Threads[i].ManagedThreadId == id)
                 {
-                    Threads[i].Start();
+                    Threads[i].Start(MySemaphore);
                     break;
                 }
             }
