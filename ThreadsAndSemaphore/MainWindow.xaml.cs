@@ -22,7 +22,7 @@ namespace ThreadsAndSemaphore
     /// </summary>
     public partial class MainWindow : Window
     {
-        public Semaphore MySemaphore { get; set; } = new Semaphore(5, 5);
+        public SemaphoreSlim MySemaphore { get; set; } = new SemaphoreSlim(1);
         public MainWindow()
         {
             InitializeComponent();
@@ -34,7 +34,6 @@ namespace ThreadsAndSemaphore
         static public int MyI { get; set; } = 1;
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            //var seconds = 2 + 2 * MyI++;
             var temp = new Thread(ThreadMethod);
             Threads.Add(temp);
             FakeTheads.Add($"Thread {temp.ManagedThreadId}");
@@ -43,26 +42,26 @@ namespace ThreadsAndSemaphore
         public void ThreadMethod(object state)
         {
             bool st = false;
-            var s = state as Semaphore;
             while (!st)
             {
 
-                if (s.WaitOne(50))
+                if (MySemaphore.Wait(10))
                 {
                     int second = 0;
                     int index = 0;
                     string item = "";
+                    string CurrentThreadName = "";
                     object ThisThreadItem = null;
                     var ThreadId2 = Thread.CurrentThread.ManagedThreadId;
                     this.Dispatcher.Invoke(() =>
                     {
                         second = 2 + 2 * MyI++;
-                        index = LBWorkingTH.Items.Add($"Thread {ThreadId2}--> {second}");
+                        CurrentThreadName = $"Thread {ThreadId2}--> {second}";
+                        index = LBWorkingTH.Items.Add(CurrentThreadName);
                         ThisThreadItem = LBWorkingTH.Items[index];
                         item = ThisThreadItem.ToString();
                         if (LBWaitingTH.Items.Contains($"Thread {ThreadId2}"))
                             LBWaitingTH.Items.Remove($"Thread {ThreadId2}");
-
                     });
                     try
                     {
@@ -78,6 +77,7 @@ namespace ThreadsAndSemaphore
                             newText += (int.Parse(temp[temp.Length - 1]) - 1).ToString();
                             this.Dispatcher.Invoke(() =>
                             {
+                                index = LBWorkingTH.Items.IndexOf(item);
                                 LBWorkingTH.Items[index] = newText;
                                 item = newText;
                             });
@@ -89,9 +89,8 @@ namespace ThreadsAndSemaphore
                         this.Dispatcher.Invoke(() =>
                         {
                             LBWorkingTH.Items.RemoveAt(index);
-
                         });
-                        s.Release();
+                        MySemaphore.Release();
                     }
                 }
                 else
@@ -115,21 +114,14 @@ namespace ThreadsAndSemaphore
             var id = int.Parse(FakeTheads[index].ToString().Split(' ')[1]);
             FakeTheads.RemoveAt(index);
 
+            Threads.Find(x=>x.ManagedThreadId==id).Start(MySemaphore);
 
-            for (int i = 0; i < Threads.Count; i++)
-            {
-                if (Threads[i].ManagedThreadId == id)
-                {
-                    Threads[i].Start(MySemaphore);
-                    break;
-                }
-            }
         }
 
         private void ThreadCount_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
             int One = (int)ThreadCount.Value;
-            MySemaphore = new Semaphore(One, One, "Semaphore");
+            MySemaphore = new SemaphoreSlim (One,One);
 
         }
     }
