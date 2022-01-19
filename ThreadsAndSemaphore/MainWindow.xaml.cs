@@ -22,7 +22,7 @@ namespace ThreadsAndSemaphore
     /// </summary>
     public partial class MainWindow : Window
     {
-        public SemaphoreSlim MySemaphore { get; set; } = new SemaphoreSlim(1);
+        public Semaphore MySemaphore { get; set; } = new Semaphore(1,1,"Sema");
         public MainWindow()
         {
             InitializeComponent();
@@ -45,7 +45,7 @@ namespace ThreadsAndSemaphore
             while (!st)
             {
 
-                if (MySemaphore.Wait(10))
+                if (MySemaphore.WaitOne(10))
                 {
                     int second = 0;
                     int index = 0;
@@ -103,9 +103,7 @@ namespace ThreadsAndSemaphore
                     });
                     Thread.Sleep(1000);
                 }
-
             }
-
         }
 
         private void LBCreatedTH_MouseDoubleClick(object sender, MouseButtonEventArgs e)
@@ -120,8 +118,9 @@ namespace ThreadsAndSemaphore
 
         private void ThreadCount_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
-            int One = (int)ThreadCount.Value;
-            MySemaphore = new SemaphoreSlim (One,One);
+            int Value = (int)ThreadCount.Value;
+            MySemaphore.Dispose();
+            MySemaphore= new Semaphore(Value, Value, "Sema");
 
         }
     }
